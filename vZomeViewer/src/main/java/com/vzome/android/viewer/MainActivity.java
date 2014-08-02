@@ -24,10 +24,11 @@ public class MainActivity extends Activity {
     private DbxChooser mChooser;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate( Bundle savedInstanceState )
+    {
+        super.onCreate( savedInstanceState );
 
-        setContentView(R.layout.activity_main);
+        setContentView( R.layout.activity_main );
     }
 
 
@@ -38,8 +39,8 @@ public class MainActivity extends Activity {
         return true;
     }
     
-    /** Called when the user clicks the Send button */
-    public void sendMessage(View view)
+    /** Called when the user clicks the "choose a model" button */
+    public void chooseModel( View view )
     {
     	mChooser = new DbxChooser( "bcb5b6h8p2wvrfb" );
 

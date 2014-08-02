@@ -205,12 +205,11 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
     public void onDrawEye(EyeTransform transform)
     {
         if ( failedLoad )
-            GLES30.glClearColor(0.5f, 0f, 0f, 1f);
+            GLES30.glClearColor( 0.5f, 0f, 0f, 1f );
         else if ( loading )
-            GLES30.glClearColor(0.7f, 0.6f, 0f, 0.5f);
+            GLES30.glClearColor( 0.2f, 0.3f, 0.4f, 0.5f );
         else
-            GLES30.glClearColor(0.5f, 0.6f, 0.7f, 0.5f);
-        RenderingProgram .checkGLError("glClearColor");
+            GLES30.glClearColor( 0.5f, 0.6f, 0.7f, 0.5f );
 
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
         RenderingProgram .checkGLError("glClear");
