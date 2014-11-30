@@ -39,6 +39,6 @@ dependencies {
     compile files('libs/vecmath.jar')
     compile files('libs/dropboxchoosersdk.jar')
     compile files('libs/cardboard.jar')
-    compile files('libs/vZome-4.0-0.jar')
+    compile files('libs/vZome-core-4.0-0.jar')
     compile 'com.android.support:support-v4:18+'
 }
