@@ -23,7 +23,7 @@ import java.util.Set;
 */
 class ShapeClass
 {
-    private static final float MODEL_SCALE_FACTOR = 1f;
+    private static final float MODEL_SCALE_FACTOR = 0.05f;
 
     private FloatBuffer mInstancePositions;
     private FloatBuffer mVertices;

@@ -26,6 +26,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+
 import com.google.vrtoolkit.cardboard.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -88,7 +91,7 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
 
     private float[] mModelFloor;
 
-    private float mObjectDistance = 20f;
+    private float mObjectDistance = 1f;
     private float mFloorDepth = 20f;
 
     private Vibrator mVibrator;
@@ -112,8 +115,9 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
         cardboardView .setRenderer( this );
 
         float fov = cardboardView .getZFar();
-        cardboardView .setFovY( 45f );
+        cardboardView .setFovY( 15f );
         cardboardView .setZPlanes( 0.1f, 200f );
+        cardboardView .setDistortionCorrectionEnabled( false );
 
         setCardboardView( cardboardView );
 
@@ -188,12 +192,23 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
     public void onNewFrame( HeadTransform headTransform )
     {
         // Build the Model part of the ModelView matrix.
-        Matrix.rotateM(mModelCube, 0, TIME_DELTA, 0.5f, 0.5f, 1.0f);
-
-        // Build the camera matrix and apply it to the ModelView.
-        Matrix.setLookAtM(mCamera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+//        Matrix.rotateM(mModelCube, 0, TIME_DELTA, 0.5f, 0.5f, 1.0f);
 
         headTransform.getHeadView(mHeadView, 0);
+
+        // an attempt at orbit mode... does not work at all
+        float[] inv = new float[16];
+        Matrix.invertM( inv, 0, mHeadView, 0 );
+        float[] camStart = new float[]{ 0f, 0f, CAMERA_Z, 0f };
+        float[] camEnd = new float[4];
+        Matrix .multiplyMV( camEnd, 0, inv, 0, camStart , 0 );
+        float[] upStart = new float[]{ 0.0f, 1.0f, 0.0f, 0f };
+        float[] upEnd = new float[4];
+        Matrix .multiplyMV( upEnd, 0, inv, 0, upStart , 0 );
+        Matrix.setLookAtM( mCamera, 0, camEnd[0], camEnd[1], camEnd[2], 0.0f, 0.0f, 0.0f, upEnd[0], upEnd[1], upEnd[2] );
+
+        // Build the camera matrix and apply it to the ModelView.
+        Matrix.setLookAtM( mCamera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f );
     }
 
     /**
@@ -244,6 +259,36 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
     public void onFinishFrame(Viewport viewport) {
     }
 
+    @Override
+    public boolean dispatchGenericMotionEvent( MotionEvent me )
+    {
+        return super .dispatchGenericMotionEvent( me );
+    }
+
+    @Override
+    public boolean dispatchKeyEvent( KeyEvent ke )
+    {
+        int code = ke .getKeyCode();
+        Log.i( TAG, "key code is : " + code );
+        if ( code == KeyEvent.KEYCODE_BUTTON_R2 ) {
+            mOverlayView.show3DToast( "Using EXPERIMENTAL rendering!" );
+            this .experimental = true;
+            return true;
+        }
+        else if ( code == KeyEvent.KEYCODE_BUTTON_L2 ) {
+            mOverlayView.show3DToast( "Using default rendering." );
+            this .experimental = false;
+            return true;
+        }
+        else if ( code == KeyEvent.KEYCODE_BUTTON_X && ke .getAction() == KeyEvent.ACTION_DOWN ) {
+            hideObject();
+            mVibrator .vibrate(50);
+            return true;
+        }
+        else
+            return super .dispatchKeyEvent( ke );
+    }
+
     /**
      * Increment the score, hide the object, and give feedback if the user pulls the magnet while
      * looking at the object. Otherwise, remind the user what to do.
@@ -253,20 +298,7 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
     {
         Log.i( TAG, "onCardboardTrigger" );
 
-        if ( isLookingAtObject() ) {
-            if ( this .experimental )
-            {
-                mOverlayView.show3DToast( "Using default rendering." );
-                this .experimental = false;
-            }
-            else
-            {
-                mOverlayView.show3DToast( "Using EXPERIMENTAL rendering!" );
-                this .experimental = true;
-            }
-        } else {
-            hideObject();
-        }
+        hideObject();
         // Always give user feedback
 
         mVibrator .vibrate(50);

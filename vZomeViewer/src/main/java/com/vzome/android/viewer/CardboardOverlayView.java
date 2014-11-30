@@ -56,7 +56,7 @@ public class CardboardOverlayView extends LinearLayout {
         addView(mRightView);
 
         // Set some reasonable defaults.
-        setDepthOffset(0.016f);
+        setDepthOffset(-0.036f);
         setColor(Color.rgb(255, 255, 255));
         setVisibility(View.VISIBLE);
 
