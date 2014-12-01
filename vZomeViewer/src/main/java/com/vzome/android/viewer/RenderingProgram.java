@@ -186,13 +186,6 @@ class RenderingProgram
 
     public float[] render( float[] model, float[] camera, EyeTransform transform, ShapeClass shape, float[][] icosahedralOrientations )
     {
-        // Set the vertices of the shape
-        GLES30.glEnableVertexAttribArray(mPositionParam);
-        GLES30.glVertexAttribDivisor(mPositionParam, 0);  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
-        GLES30.glVertexAttribPointer( mPositionParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT,
-                false, 0, shape .getVertices() );
-        checkGLError("mPositionParam");
-
         float[] modelViewProjection = new float[16];
         float[] worldInverse = new float[16];
         float[] worldInverseTranspose = new float[16];
@@ -217,12 +210,8 @@ class RenderingProgram
         // Set the ModelViewProjection matrix in the shader.
         GLES30.glUniformMatrix4fv( mModelViewProjectionParam, 1, false, modelViewProjection, 0 );
 
-        float[] color = shape .getColor();
-        GLES30.glUniform4f( mColorParam, color[0], color[1], color[2], color[3] );
-
         if ( doLighting ) {
             GLES30.glUniform3f( mLightPosParam, lightPosInEyeSpace[0], lightPosInEyeSpace[1], lightPosInEyeSpace[2] );
-
             if ( this .isNiceLighting )
             {
                 GLES30.glUniformMatrix4fv( this.viewInverse, 1, false, model, 0);
@@ -232,8 +221,27 @@ class RenderingProgram
                 GLES30.glUniformMatrix4fv( mModelParam, 1, false, model, 0);
                 GLES30.glUniformMatrix4fv( mModelViewParam, 1, false, modelView, 0);
             }
+            if ( this .isInstanced ) {
+                for ( int i = 0; i < 60; i++ )
+                    GLES30.glUniformMatrix4fv( mOrientationsParam[ i ], 1, false, icosahedralOrientations[ i ], 0 );
+                checkGLError("mOrientationsParam");
+            }
+        }
 
+        // everything above is shape-independent
+        // everything below is shape-dependent
 
+        float[] color = shape .getColor();
+        GLES30.glUniform4f( mColorParam, color[0], color[1], color[2], color[3] );
+
+        // Set the vertices of the shape
+        GLES30.glEnableVertexAttribArray(mPositionParam);
+        GLES30.glVertexAttribDivisor(mPositionParam, 0);  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
+        GLES30.glVertexAttribPointer( mPositionParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT,
+                false, 0, shape .getVertices() );
+        checkGLError("mPositionParam");
+
+        if ( doLighting ) {
             GLES30.glEnableVertexAttribArray(normalParam);
             GLES30.glVertexAttribDivisor(normalParam, 0);  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
             GLES30.glVertexAttribPointer(normalParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT,
@@ -241,11 +249,6 @@ class RenderingProgram
             checkGLError("normalParam");
 
             if ( this .isInstanced ) {
-
-                for ( int i = 0; i < 60; i++ )
-                    GLES30.glUniformMatrix4fv( mOrientationsParam[ i ], 1, false, icosahedralOrientations[ i ], 0 );
-                checkGLError("mOrientationsParam");
-
                 // Set the positions of the shapes
                 GLES30.glEnableVertexAttribArray( instanceData );
                 GLES30.glVertexAttribDivisor( instanceData, 1);  // SV: this one is instanced
