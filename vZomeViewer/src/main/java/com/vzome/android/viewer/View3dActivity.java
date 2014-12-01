@@ -233,12 +233,12 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
         {
             if ( this .experimental )
             {
-                this.experimentalRenderer.use( mModelCube, mCamera, transform, orientations );
+                this.experimentalRenderer.setUniforms( mModelCube, mCamera, transform, orientations );
                 for( ShapeClass shapeClass : shapes )
                     this.experimentalRenderer.renderShape( shapeClass );
             }
             else {
-                this.instancedRenderer.use( mModelCube, mCamera, transform, orientations );
+                this.instancedRenderer.setUniforms( mModelCube, mCamera, transform, orientations );
                 for( ShapeClass shapeClass : shapes )
                     this.instancedRenderer.renderShape( shapeClass );
             }
@@ -246,12 +246,12 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
         else
         {
             if (struts != null) {
-                this.lineRenderer.use( mModelCube, mCamera, transform, orientations );
+                this.lineRenderer.setUniforms( mModelCube, mCamera, transform, orientations );
                 this.lineRenderer.renderShape( struts );
             }
         }
 
-        this .floorRenderer .use( mModelFloor, mCamera, transform, orientations );
+        this .floorRenderer .setUniforms( mModelFloor, mCamera, transform, orientations );
         this .floorRenderer .renderShape( mFloor );
     }
 

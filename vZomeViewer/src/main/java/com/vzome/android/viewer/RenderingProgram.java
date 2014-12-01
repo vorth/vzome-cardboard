@@ -72,6 +72,41 @@ class RenderingProgram
         checkGLError("glAttachShader fragmentShader");
         GLES30.glLinkProgram(mGlProgram);
         checkGLError("glLinkProgram");
+
+        if ( this .isNiceLighting )
+            mModelViewProjectionParam = GLES30.glGetUniformLocation( mGlProgram, "worldViewProjection" );
+        else
+            mModelViewProjectionParam = GLES30.glGetUniformLocation( mGlProgram, "u_MVP" );
+        checkGLError("worldViewProjection");
+
+        mPositionParam = GLES30.glGetAttribLocation(mGlProgram, "a_Position");
+        mColorParam = GLES30.glGetUniformLocation(mGlProgram, "u_Color");
+        checkGLError("u_Color");
+
+        if ( this .doLighting )
+        {
+            if ( this .isNiceLighting ) {
+                mLightPosParam = GLES30.glGetUniformLocation(mGlProgram, "lightWorldPos");
+                worldInverseTranspose = GLES30.glGetUniformLocation( mGlProgram, "worldInverseTranspose" );
+                viewInverse = GLES30.glGetUniformLocation( mGlProgram, "viewInverse" );
+            }
+            else {
+                mLightPosParam = GLES30.glGetUniformLocation(mGlProgram, "u_LightPos");
+                mModelViewParam = GLES30.glGetUniformLocation( mGlProgram, "u_MVMatrix" );
+                mModelParam = GLES30.glGetUniformLocation( mGlProgram, "u_Model" );
+            }
+
+            normalParam = GLES30.glGetAttribLocation( mGlProgram, "a_Normal" );
+            checkGLError("a_Normal");
+
+            if ( this .isInstanced ) {
+
+                for ( int i = 0; i < 60; i++ )
+                    mOrientationsParam[ i ] = GLES30.glGetUniformLocation( mGlProgram, "u_Orientations[" + i + "]" );
+
+                instanceData = GLES30.glGetAttribLocation( mGlProgram, "a_InstanceData" ); // a_InstanceData will actually store (x,y,z,orientation)
+            }
+        }
     }
 
     /**
@@ -143,45 +178,10 @@ class RenderingProgram
         return "";
     }
 
-    public void use( float[] model, float[] camera, EyeTransform transform, float[][] icosahedralOrientations )
+    public void setUniforms( float[] model, float[] camera, EyeTransform transform, float[][] icosahedralOrientations )
     {
         GLES30.glUseProgram( mGlProgram );
         checkGLError("glUseProgram");  // a compile / link problem seems to fail only now!
-
-        if ( this .isNiceLighting )
-            mModelViewProjectionParam = GLES30.glGetUniformLocation( mGlProgram, "worldViewProjection" );
-        else
-            mModelViewProjectionParam = GLES30.glGetUniformLocation( mGlProgram, "u_MVP" );
-        checkGLError("worldViewProjection");
-
-        mPositionParam = GLES30.glGetAttribLocation(mGlProgram, "a_Position");
-        mColorParam = GLES30.glGetUniformLocation(mGlProgram, "u_Color");
-        checkGLError("u_Color");
-
-        if ( this .doLighting )
-        {
-            if ( this .isNiceLighting ) {
-                mLightPosParam = GLES30.glGetUniformLocation(mGlProgram, "lightWorldPos");
-                worldInverseTranspose = GLES30.glGetUniformLocation( mGlProgram, "worldInverseTranspose" );
-                viewInverse = GLES30.glGetUniformLocation( mGlProgram, "viewInverse" );
-            }
-            else {
-                mLightPosParam = GLES30.glGetUniformLocation(mGlProgram, "u_LightPos");
-                mModelViewParam = GLES30.glGetUniformLocation( mGlProgram, "u_MVMatrix" );
-                mModelParam = GLES30.glGetUniformLocation( mGlProgram, "u_Model" );
-            }
-
-            normalParam = GLES30.glGetAttribLocation( mGlProgram, "a_Normal" );
-            checkGLError("a_Normal");
-
-            if ( this .isInstanced ) {
-
-                for ( int i = 0; i < 60; i++ )
-                    mOrientationsParam[ i ] = GLES30.glGetUniformLocation( mGlProgram, "u_Orientations[" + i + "]" );
-
-                instanceData = GLES30.glGetAttribLocation( mGlProgram, "a_InstanceData" ); // a_InstanceData will actually store (x,y,z,orientation)
-            }
-        }
 
         float[] modelViewProjection = new float[16];
         float[] worldInverse = new float[16];
