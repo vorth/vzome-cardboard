@@ -143,7 +143,7 @@ class RenderingProgram
         return "";
     }
 
-    public void use()
+    public void use( float[] model, float[] camera, EyeTransform transform, float[][] icosahedralOrientations )
     {
         GLES30.glUseProgram( mGlProgram );
         checkGLError("glUseProgram");  // a compile / link problem seems to fail only now!
@@ -182,10 +182,7 @@ class RenderingProgram
                 instanceData = GLES30.glGetAttribLocation( mGlProgram, "a_InstanceData" ); // a_InstanceData will actually store (x,y,z,orientation)
             }
         }
-    }
 
-    public float[] render( float[] model, float[] camera, EyeTransform transform, ShapeClass shape, float[][] icosahedralOrientations )
-    {
         float[] modelViewProjection = new float[16];
         float[] worldInverse = new float[16];
         float[] worldInverseTranspose = new float[16];
@@ -227,9 +224,10 @@ class RenderingProgram
                 checkGLError("mOrientationsParam");
             }
         }
+    }
 
-        // everything above is shape-independent
-        // everything below is shape-dependent
+    public void renderShape( ShapeClass shape )
+    {
 
         float[] color = shape .getColor();
         GLES30.glUniform4f( mColorParam, color[0], color[1], color[2], color[3] );
@@ -264,6 +262,5 @@ class RenderingProgram
             GLES30.glDrawArrays( GLES30.GL_LINES, 0, shape .getVertexCount() );
         }
         checkGLError("Drawing a shape");
-        return modelView;
     }
 }
