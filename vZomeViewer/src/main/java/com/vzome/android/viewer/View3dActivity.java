@@ -117,11 +117,11 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
         cardboardView .setRenderer( this );
 
         float fov = cardboardView .getZFar();
-        cardboardView .setFovY( 15f );
         cardboardView .setZPlanes( 0.1f, 200f );
         cardboardView .setDistortionCorrectionEnabled( false );
 
         setCardboardView( cardboardView );
+//        cardboardView .setFovY( 35f );
 
         mModelCube = new float[16];
         mCamera = new float[16];
