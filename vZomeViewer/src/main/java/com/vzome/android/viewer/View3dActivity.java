@@ -35,6 +35,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -71,6 +72,7 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
 
     private RenderingProgram instancedRenderer, floorRenderer, lineRenderer, experimentalRenderer;
     private Set<ShapeClass> shapes = new HashSet<ShapeClass>();
+    private boolean buffersCopied = false;
     private boolean loading = true;
     private boolean failedLoad = false;
     private boolean experimental = false;
@@ -209,6 +211,55 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
 
         // Build the camera matrix and apply it to the ModelView.
         Matrix.setLookAtM( mCamera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f );
+
+        if ( !buffersCopied && !loading && !failedLoad ) {
+            Log.i( TAG, "creating VBOs" );
+            // First, generate as many buffers as we need.
+            // This will give us the OpenGL handles for these buffers.
+            int numBuffers = 3 * this.shapes.size();
+            final int buffers[] = new int[ numBuffers ];
+            GLES30.glGenBuffers( numBuffers, buffers, 0 );
+
+            int bufferTriple = 0;
+            for( ShapeClass shape : shapes )
+            {
+                // Bind to the buffer. glBufferData will affect this buffer specifically.
+                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, buffers[ bufferTriple + 0 ] );
+                // Transfer data from client memory to the buffer.
+                // We can release the client memory after this call.
+                FloatBuffer clientBuffer = shape .getVertices();
+                GLES30.glBufferData( GLES30.GL_ARRAY_BUFFER, clientBuffer .capacity() * 4,
+                        clientBuffer, GLES30.GL_STATIC_DRAW );
+                // IMPORTANT: Unbind from the buffer when we're done with it.
+                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, 0 );
+
+                // Bind to the buffer. glBufferData will affect this buffer specifically.
+                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, buffers[ bufferTriple + 1 ] );
+                // Transfer data from client memory to the buffer.
+                // We can release the client memory after this call.
+                clientBuffer = shape .getNormals();
+                GLES30.glBufferData( GLES30.GL_ARRAY_BUFFER, clientBuffer .capacity() * 4,
+                        clientBuffer, GLES30.GL_STATIC_DRAW );
+                // IMPORTANT: Unbind from the buffer when we're done with it.
+                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, 0 );
+
+                // Bind to the buffer. glBufferData will affect this buffer specifically.
+                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, buffers[ bufferTriple + 2 ] );
+                // Transfer data from client memory to the buffer.
+                // We can release the client memory after this call.
+                clientBuffer = shape .getPositions();
+                GLES30.glBufferData( GLES30.GL_ARRAY_BUFFER, clientBuffer .capacity() * 4,
+                        clientBuffer, GLES30.GL_STATIC_DRAW );
+                // IMPORTANT: Unbind from the buffer when we're done with it.
+                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, 0 );
+
+                shape .setBuffers( buffers[ bufferTriple + 0 ], buffers[ bufferTriple + 1 ], buffers[ bufferTriple + 2 ] );
+                bufferTriple += 3;
+                Log.i( TAG, "another buffer triple loaded into GPU" );
+            }
+            RenderingProgram .checkGLError( "loadVBOs" );
+            buffersCopied = true;
+        }
     }
 
     /**
@@ -229,7 +280,7 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
         RenderingProgram .checkGLError("glClear");
 
-        if ( ! loading )
+        if ( buffersCopied )
         {
             if ( this .experimental )
             {

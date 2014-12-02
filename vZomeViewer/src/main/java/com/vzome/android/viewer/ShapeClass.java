@@ -28,6 +28,7 @@ class ShapeClass
     private FloatBuffer mInstancePositions;
     private FloatBuffer mVertices;
     private FloatBuffer mNormals = null;
+    int positionsVBO = -1, normalsVBO = -1, verticesVBO = -1;
     private float[] mColor;
     private int instanceCount = 0;
     private int vertexCount;
@@ -35,6 +36,14 @@ class ShapeClass
     private static final String TAG = "ShapeClass";
 
     private static final int COORDS_PER_VERTEX = 3;
+
+    public void setBuffers( int buffer, int buffer1, int buffer2 )
+    {
+        this .verticesVBO = buffer;
+        this .normalsVBO = buffer1;
+        this .positionsVBO = buffer2;
+        this .mVertices = null;
+    }
 
     public static class Config
     {
@@ -186,4 +195,10 @@ class ShapeClass
     {
         return this .instanceCount;
     }
+
+    public int getVerticesVBO() { return this .verticesVBO; }
+
+    public int getNormalsVBO() { return this .normalsVBO; }
+
+    public int getPositionsVBO() { return this .positionsVBO; }
 }

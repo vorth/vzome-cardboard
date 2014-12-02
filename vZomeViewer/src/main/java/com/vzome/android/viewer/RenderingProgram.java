@@ -228,22 +228,27 @@ class RenderingProgram
 
     public void renderShape( ShapeClass shape )
     {
-
         float[] color = shape .getColor();
         GLES30.glUniform4f( mColorParam, color[0], color[1], color[2], color[3] );
 
         // Set the vertices of the shape
-        GLES30.glEnableVertexAttribArray(mPositionParam);
-        GLES30.glVertexAttribDivisor(mPositionParam, 0);  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
-        GLES30.glVertexAttribPointer( mPositionParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT,
-                false, 0, shape .getVertices() );
+        int vbo = shape .getVerticesVBO();
+        if ( vbo > 0 )
+            GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, vbo );
+        GLES30.glEnableVertexAttribArray( mPositionParam );
+        GLES30.glVertexAttribDivisor( mPositionParam, 0 );  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
+        if ( vbo > 0 ) {
+            GLES30.glVertexAttribPointer( mPositionParam , COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, 0, 0 );
+            GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, 0);
+        }
+        else
+            GLES30.glVertexAttribPointer( mPositionParam , COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, 0, shape .getVertices() );
         checkGLError("mPositionParam");
 
         if ( doLighting ) {
-            GLES30.glEnableVertexAttribArray(normalParam);
-            GLES30.glVertexAttribDivisor(normalParam, 0);  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
-            GLES30.glVertexAttribPointer(normalParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT,
-                    false, 0, shape .getNormals() );
+            GLES30.glEnableVertexAttribArray( normalParam );
+            GLES30.glVertexAttribDivisor( normalParam, 0 );  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
+            GLES30.glVertexAttribPointer( normalParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, 0, shape .getNormals() );
             checkGLError("normalParam");
 
             if ( this .isInstanced ) {
