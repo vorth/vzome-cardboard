@@ -280,7 +280,7 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
         RenderingProgram .checkGLError("glClear");
 
-        if ( buffersCopied )
+        if ( !loading )
         {
             if ( this .experimental )
             {

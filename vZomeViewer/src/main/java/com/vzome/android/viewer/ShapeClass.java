@@ -29,6 +29,7 @@ class ShapeClass
     private FloatBuffer mVertices;
     private FloatBuffer mNormals = null;
     int positionsVBO = -1, normalsVBO = -1, verticesVBO = -1;
+    private boolean usesVBOs = false;
     private float[] mColor;
     private int instanceCount = 0;
     private int vertexCount;
@@ -43,6 +44,9 @@ class ShapeClass
         this .normalsVBO = buffer1;
         this .positionsVBO = buffer2;
         this .mVertices = null;
+        this .mInstancePositions = null;
+        this .mNormals = null;
+        this .usesVBOs = true;
     }
 
     public static class Config
@@ -195,6 +199,8 @@ class ShapeClass
     {
         return this .instanceCount;
     }
+
+    public boolean usesVBOs() { return this .usesVBOs; }
 
     public int getVerticesVBO() { return this .verticesVBO; }
 

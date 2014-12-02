@@ -233,11 +233,11 @@ class RenderingProgram
 
         // Set the vertices of the shape
         int vbo = shape .getVerticesVBO();
-        if ( vbo > 0 )
+        if ( shape .usesVBOs() )
             GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, vbo );
         GLES30.glEnableVertexAttribArray( mPositionParam );
         GLES30.glVertexAttribDivisor( mPositionParam, 0 );  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
-        if ( vbo > 0 ) {
+        if ( shape .usesVBOs() ) {
             GLES30.glVertexAttribPointer( mPositionParam , COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, 0, 0 );
             GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, 0);
         }
@@ -246,16 +246,32 @@ class RenderingProgram
         checkGLError("mPositionParam");
 
         if ( doLighting ) {
+            vbo = shape .getNormalsVBO();
+            if ( shape .usesVBOs() )
+                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, vbo );
             GLES30.glEnableVertexAttribArray( normalParam );
             GLES30.glVertexAttribDivisor( normalParam, 0 );  // SV: this one is not instanced BUT WE HAVE TO SAY SO EXPLICITLY, OR NOTHING WORKS!
-            GLES30.glVertexAttribPointer( normalParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, 0, shape .getNormals() );
+            if ( shape .usesVBOs() ) {
+                GLES30.glVertexAttribPointer( normalParam , COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, 0, 0 );
+                GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, 0);
+            }
+            else
+                GLES30.glVertexAttribPointer( normalParam, COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, 0, shape .getNormals() );
             checkGLError("normalParam");
 
             if ( this .isInstanced ) {
                 // Set the positions of the shapes
+                vbo = shape .getPositionsVBO();
+                if ( shape .usesVBOs() )
+                    GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, vbo );
                 GLES30.glEnableVertexAttribArray( instanceData );
                 GLES30.glVertexAttribDivisor( instanceData, 1);  // SV: this one is instanced
-                GLES30.glVertexAttribPointer( instanceData, 4, GLES30.GL_FLOAT, false, 0, shape .getPositions() );
+                if ( shape .usesVBOs() ) {
+                    GLES30.glVertexAttribPointer( instanceData , 4, GLES30.GL_FLOAT, false, 0, 0 );
+                    GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, 0);
+                }
+                else
+                    GLES30.glVertexAttribPointer( instanceData, 4, GLES30.GL_FLOAT, false, 0, shape .getPositions() );
 
                 GLES30.glDrawArraysInstanced( GLES30.GL_TRIANGLES, 0, shape .getVertexCount(), shape .getInstanceCount() );
             }
