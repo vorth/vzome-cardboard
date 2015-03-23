@@ -29,10 +29,11 @@ android {
 }
 
 dependencies {
-    compile files('libs/antlr.jar')
-    compile files('libs/vecmath.jar')
     compile files('libs/dropboxchoosersdk.jar')
     compile files('libs/cardboard.jar')
-    compile files('libs/vZome-core-4.0-0.jar')
     compile 'com.android.support:support-v4:18+'
+
+    compile     group: 'antlr',             name: 'antlr',             version:'2.7.7'
+    compile     group: 'java3d',            name: 'vecmath',           version:'1.6.0-pre11'
+    compile     group: 'com.vzome.core',    name: 'vzome-core',        version:'0.1'
 }

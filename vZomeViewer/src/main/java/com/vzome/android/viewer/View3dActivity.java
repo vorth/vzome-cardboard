@@ -47,13 +47,13 @@ import com.vzome.api.Application;
 import com.vzome.api.Document;
 import com.vzome.api.Strut;
 
-import org.vorthmann.zome.math.Polyhedron;
-import org.vorthmann.zome.model.real.Connector;
-import org.vorthmann.zome.model.real.Manifestation;
-import org.vorthmann.zome.render.Color;
-import org.vorthmann.zome.render.Colors;
-import org.vorthmann.zome.render.RenderedManifestation;
-import org.vorthmann.zome.render.RenderedModel;
+import com.vzome.core.math.Polyhedron;
+import com.vzome.core.model.Connector;
+import com.vzome.core.model.Manifestation;
+import com.vzome.core.render.Color;
+import com.vzome.core.render.Colors;
+import com.vzome.core.render.RenderedManifestation;
+import com.vzome.core.render.RenderedModel;
 
 /**
  * A Cardboard sample application.
@@ -454,12 +454,12 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
                     Manifestation man = rman.getManifestation();
                     Object instance = null;
                     if ( man instanceof Connector) {
-                        instance = new Ball( rmodel.getField(), (Connector) man );
+                        instance = new Ball( (Connector) man );
                     }
-                    else if ( man instanceof org.vorthmann.zome.model.real.Strut ) {
+                    else if ( man instanceof com.vzome.core.model.Strut ) {
                         int zone = rman .getStrutZone();
 
-                        instance = new Strut( rmodel.getField(), (org.vorthmann.zome.model.real.Strut) man, zone );
+                        instance = new Strut( (com.vzome.core.model.Strut) man, zone );
                     }
                     else {
                         Log.w( TAG, "%%%%%%%%%%%%%%%% missing panel!" );

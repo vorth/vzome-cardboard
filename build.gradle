@@ -12,5 +12,13 @@ buildscript {
 allprojects {
     repositories {
         mavenCentral()
+        mavenLocal()
+
+        ivy { // not really an Ivy repo, but this pattern lets us automate the bare JAR download for java3d/vecmath
+            url "http://jogamp.org/deployment"
+            layout "pattern", {
+                artifact "[organization]/[revision]/[artifact].[ext]"
+            }
+        }
     }
 }

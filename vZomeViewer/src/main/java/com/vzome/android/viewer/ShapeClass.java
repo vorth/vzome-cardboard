@@ -6,9 +6,10 @@ import com.vzome.api.Ball;
 import com.vzome.api.Strut;
 import com.vzome.api.Vector;
 
-import org.vorthmann.zome.algebra.AlgebraicField;
-import org.vorthmann.zome.math.Polyhedron;
-import org.vorthmann.zome.math.RealVector;
+import com.vzome.core.algebra.AlgebraicField;
+import com.vzome.core.algebra.AlgebraicVector;
+import com.vzome.core.math.Polyhedron;
+import com.vzome.core.math.RealVector;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -63,16 +64,16 @@ class ShapeClass
         List vertexList = shape.getVertexList();
         Set<Polyhedron.Face> faces = shape.getFaceSet();
         for (Polyhedron.Face face : faces) {
-            int[] normal = face.getNormal();
-            RealVector rn = field.getRealVector(field.negate(normal)).normalize();
+            AlgebraicVector normal = face.getNormal();
+            RealVector rn = normal.negate().toRealVector().normalize();
             int count = face.size();
-            int[] vertex = (int[]) vertexList.get(face.getVertex(0));
-            RealVector rv0 = field.getRealVector(vertex);
-            vertex = (int[]) vertexList.get(face.getVertex(1));
-            RealVector rvPrev = field.getRealVector(vertex);
+            AlgebraicVector vertex = (AlgebraicVector) vertexList.get(face.getVertex(0));
+            RealVector rv0 = vertex.toRealVector();
+            vertex = (AlgebraicVector) vertexList.get(face.getVertex(1));
+            RealVector rvPrev = vertex.toRealVector();
             for (int i = 2; i < count; i++) {
-                vertex = (int[]) vertexList.get(face.getVertex(i));
-                RealVector rv = field.getRealVector(vertex);
+                vertex = (AlgebraicVector) vertexList.get(face.getVertex(i));
+                RealVector rv = vertex.toRealVector();
                 vertices.add(rv0);
                 normals.add(rn);
                 vertices.add(rvPrev);
