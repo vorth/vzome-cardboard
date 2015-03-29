@@ -17,8 +17,8 @@
 apply plugin: 'android'
 
 android {
-    compileSdkVersion 18
-    buildToolsVersion '19.1.0'
+    compileSdkVersion 22
+    buildToolsVersion '22.0.1'
 
     defaultConfig {
         minSdkVersion 18
@@ -31,9 +31,9 @@ android {
 dependencies {
     compile files('libs/dropboxchoosersdk.jar')
     compile files('libs/cardboard.jar')
-    compile 'com.android.support:support-v4:18+'
+    compile 'com.android.support:support-v4:22+'
 
-    compile     group: 'antlr',             name: 'antlr',             version:'2.7.7'
-    compile     group: 'java3d',            name: 'vecmath',           version:'1.6.0-pre11'
-    compile     group: 'com.vzome.core',    name: 'vzome-core',        version:'0.1'
+    compile ( 'com.vzome.core:vzome-core:0.1' ) {
+        exclude group: 'org.python'
+    }
 }
