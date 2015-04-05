@@ -26,6 +26,9 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
 }
 
 dependencies {
@@ -33,7 +36,8 @@ dependencies {
     compile files('libs/cardboard.jar')
     compile 'com.android.support:support-v4:22+'
 
-    compile ( 'com.vzome.core:vzome-core:0.1' ) {
+    compile ( 'com.vzome.core:vzome-core:0.2' ) {
         exclude group: 'org.python'
+        exclude group: 'org.eclipse.jetty'
     }
 }
