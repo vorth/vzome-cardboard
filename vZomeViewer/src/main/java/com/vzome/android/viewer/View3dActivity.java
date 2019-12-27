@@ -29,31 +29,23 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
-import com.google.vrtoolkit.cardboard.*;
-
-import javax.microedition.khronos.egl.EGLConfig;
+import com.google.vrtoolkit.cardboard.CardboardActivity;
+import com.google.vrtoolkit.cardboard.CardboardView;
+import com.google.vrtoolkit.cardboard.Eye;
+import com.google.vrtoolkit.cardboard.HeadTransform;
+import com.google.vrtoolkit.cardboard.Viewport;
+import com.vzome.api.Application;
+import com.vzome.api.Document;
+import com.vzome.core.render.Colors;
+import com.vzome.opengl.InstancedRenderer;
+import com.vzome.opengl.OpenGlShim;
+import com.vzome.opengl.Renderer;
+import com.vzome.opengl.Scene;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.FloatBuffer;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
-import com.vzome.api.Ball;
-import com.vzome.api.Application;
-import com.vzome.api.Document;
-import com.vzome.api.Strut;
-
-import com.vzome.core.math.Polyhedron;
-import com.vzome.core.model.Connector;
-import com.vzome.core.model.Manifestation;
-import com.vzome.core.render.Color;
-import com.vzome.core.render.Colors;
-import com.vzome.core.render.RenderedManifestation;
-import com.vzome.core.render.RenderedModel;
+import javax.microedition.khronos.egl.EGLConfig;
 
 /**
  * A Cardboard sample application.
@@ -70,20 +62,13 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
 
     private final WorldLayoutData DATA = new WorldLayoutData();
 
-    private RenderingProgram instancedRenderer, floorRenderer, lineRenderer, experimentalRenderer;
-    private Set<ShapeClass> shapes = new HashSet<ShapeClass>();
+    private Renderer instancedRenderer, floorRenderer, lineRenderer;
+    private Scene scene = null;
     private boolean buffersCopied = false;
-    private boolean loading = true;
     private boolean failedLoad = false;
     private boolean experimental = false;
-    private float[][] orientations;
 
-    private void addShapeClass( Polyhedron shape, ShapeClass.Config config )
-    {
-        ShapeClass shapeClass = ShapeClass .create( shape, config.instances, config.color );
-        shapes .add( shapeClass );
-        Log.i(TAG, "%%%%%%%%%%%%%%%% new shapeClass");
-    }
+    private final OpenGlShim glShim = new AndroidOpenGlShim();
 
     private ShapeClass mFloor, struts;
 
@@ -114,11 +99,9 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
 
         setContentView(R.layout.common_ui);
         CardboardView cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
-        cardboardView .setRenderer( this );
-
-        float fov = cardboardView .getZFar();
-        cardboardView .setZPlanes( 0.1f, 200f );
+        cardboardView.setRestoreGLStateEnabled(false);
         cardboardView .setDistortionCorrectionEnabled( false );
+        cardboardView .setRenderer( this );
 
         setCardboardView( cardboardView );
 //        cardboardView .setFovY( 35f );
@@ -168,13 +151,11 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
 
         mFloor = new ShapeClass( DATA.FLOOR_COORDS, DATA.FLOOR_NORMALS, null, DATA.FLOOR_COLOR );
 
-        this .lineRenderer = new RenderingProgram( getResources(), false, false, false );
+        this .lineRenderer = new Renderer( glShim );
 
-        this .floorRenderer = new RenderingProgram( getResources(), true, false, false );
+        this .floorRenderer = new Renderer( glShim );
 
-        this .instancedRenderer = new RenderingProgram( getResources(), true, true, false );
-
-        this .experimentalRenderer = new RenderingProgram( getResources(), true, true, true );
+        this .instancedRenderer = new InstancedRenderer( glShim );
 
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
 
@@ -212,52 +193,9 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
         // Build the camera matrix and apply it to the ModelView.
         Matrix.setLookAtM( mCamera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f );
 
-        if ( !buffersCopied && !loading && !failedLoad ) {
+        if ( !buffersCopied && !failedLoad && this.scene != null ) {
             Log.i( TAG, "creating VBOs" );
-            // First, generate as many buffers as we need.
-            // This will give us the OpenGL handles for these buffers.
-            int numBuffers = 3 * this.shapes.size();
-            final int buffers[] = new int[ numBuffers ];
-            GLES30.glGenBuffers( numBuffers, buffers, 0 );
-
-            int bufferTriple = 0;
-            for( ShapeClass shape : shapes )
-            {
-                // Bind to the buffer. glBufferData will affect this buffer specifically.
-                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, buffers[ bufferTriple + 0 ] );
-                // Transfer data from client memory to the buffer.
-                // We can release the client memory after this call.
-                FloatBuffer clientBuffer = shape .getVertices();
-                GLES30.glBufferData( GLES30.GL_ARRAY_BUFFER, clientBuffer .capacity() * 4,
-                        clientBuffer, GLES30.GL_STATIC_DRAW );
-                // IMPORTANT: Unbind from the buffer when we're done with it.
-                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, 0 );
-
-                // Bind to the buffer. glBufferData will affect this buffer specifically.
-                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, buffers[ bufferTriple + 1 ] );
-                // Transfer data from client memory to the buffer.
-                // We can release the client memory after this call.
-                clientBuffer = shape .getNormals();
-                GLES30.glBufferData( GLES30.GL_ARRAY_BUFFER, clientBuffer .capacity() * 4,
-                        clientBuffer, GLES30.GL_STATIC_DRAW );
-                // IMPORTANT: Unbind from the buffer when we're done with it.
-                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, 0 );
-
-                // Bind to the buffer. glBufferData will affect this buffer specifically.
-                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, buffers[ bufferTriple + 2 ] );
-                // Transfer data from client memory to the buffer.
-                // We can release the client memory after this call.
-                clientBuffer = shape .getPositions();
-                GLES30.glBufferData( GLES30.GL_ARRAY_BUFFER, clientBuffer .capacity() * 4,
-                        clientBuffer, GLES30.GL_STATIC_DRAW );
-                // IMPORTANT: Unbind from the buffer when we're done with it.
-                GLES30.glBindBuffer( GLES30.GL_ARRAY_BUFFER, 0 );
-
-                shape .setBuffers( buffers[ bufferTriple + 0 ], buffers[ bufferTriple + 1 ], buffers[ bufferTriple + 2 ] );
-                bufferTriple += 3;
-                Log.i( TAG, "another buffer triple loaded into GPU" );
-            }
-            RenderingProgram .checkGLError( "loadVBOs" );
+            this .instancedRenderer .bindBuffers( glShim, this .scene );
             buffersCopied = true;
         }
     }
@@ -268,42 +206,22 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
      * @param transform The transformations to apply to render this eye.
      */
     @Override
-    public void onDrawEye(EyeTransform transform)
+    public void onDrawEye(Eye transform)
     {
         if ( failedLoad )
             GLES30.glClearColor( 0.5f, 0f, 0f, 1f );
-        else if ( loading )
+        else if ( this .scene == null )
             GLES30.glClearColor( 0.2f, 0.3f, 0.4f, 0.5f );
         else
             GLES30.glClearColor( 0.5f, 0.6f, 0.7f, 0.5f );
 
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
-        RenderingProgram .checkGLError("glClear");
 
-        if ( !loading )
-        {
-            if ( this .experimental )
-            {
-                this.experimentalRenderer.setUniforms( mModelCube, mCamera, transform, orientations );
-                for( ShapeClass shapeClass : shapes )
-                    this.experimentalRenderer.renderShape( shapeClass );
-            }
-            else {
-                this.instancedRenderer.setUniforms( mModelCube, mCamera, transform, orientations );
-                for( ShapeClass shapeClass : shapes )
-                    this.instancedRenderer.renderShape( shapeClass );
-            }
-        }
-        else
-        {
-            if (struts != null) {
-                this.lineRenderer.setUniforms( mModelCube, mCamera, transform, orientations );
-                this.lineRenderer.renderShape( struts );
-            }
-        }
+        if ( this .scene != null )
+            this .instancedRenderer .renderScene( glShim, mModelCube, mCamera, transform.getEyeView(), transform.getPerspective( 0.1f, 200f ), this.scene );
 
-        this .floorRenderer .setUniforms( mModelFloor, mCamera, transform, orientations );
-        this .floorRenderer .renderShape( mFloor );
+//        this .floorRenderer .setUniforms( mModelFloor, mCamera, transform, orientations );
+//        this .floorRenderer .renderShape( mFloor );
     }
 
     @Override
@@ -425,53 +343,8 @@ public class View3dActivity extends CardboardActivity implements CardboardView.S
                 Log.i( TAG, "%%%%%%%%%%%%%%%% finished: " + url );
 
                 Colors colors = vZome .getColors();
-                View3dActivity.this.orientations = doc .getOrientations();
 
-//                float[] white = new float[] { 1f, 1f, 1f, 1f };
-//                View3dActivity.this.balls = ShapeClass .create( vZome .getBallShape(), doc .getBalls(), white );
-
-                float[] black = new float[] { 0f, 0f, 0f, 1f };
-                View3dActivity.this.struts = ShapeClass .create( doc .getStruts().toArray(), black );
-
-                Map<Polyhedron,ShapeClass.Config> shapeClasses = new HashMap<Polyhedron,ShapeClass.Config>();
-                RenderedModel rmodel = doc .getRenderedModel();
-                Iterator rms = rmodel .getRenderedManifestations();
-                while ( rms .hasNext() ) {
-                    RenderedManifestation rman = (RenderedManifestation) rms .next();
-
-                    Polyhedron shape = rman .getShape();
-                    ShapeClass.Config scc = shapeClasses .get( shape );
-                    if ( scc == null ) {
-                        Log.i( TAG, "%%%%%%%%%%%%%%%% new shape" );
-                        scc = new ShapeClass.Config();
-                        shapeClasses .put( shape, scc );
-                        Color color = colors .getColor( rman .getColorName() );
-                        float[] rgb = new float[3];
-                        color .getRGBColorComponents( rgb );
-                        scc .color = new float[]{ rgb[0], rgb[1], rgb[2], 1f };
-                    }
-
-                    Manifestation man = rman.getManifestation();
-                    Object instance = null;
-                    if ( man instanceof Connector) {
-                        instance = new Ball( (Connector) man );
-                    }
-                    else if ( man instanceof com.vzome.core.model.Strut ) {
-                        int zone = rman .getStrutZone();
-
-                        instance = new Strut( (com.vzome.core.model.Strut) man, zone );
-                    }
-                    else {
-                        Log.w( TAG, "%%%%%%%%%%%%%%%% missing panel!" );
-                        continue;
-                    }
-                    scc .instances .add( instance );
-                }
-                for( Map.Entry<Polyhedron, ShapeClass.Config> entry : shapeClasses.entrySet() )
-                {
-                    View3dActivity.this.addShapeClass( entry .getKey(), entry .getValue() );
-                }
-                View3dActivity.this.loading = false;
+                scene = doc .getOpenGlScene( colors );
             }
             catch (Exception e) {
                 View3dActivity.this.failedLoad = true;

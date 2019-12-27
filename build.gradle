@@ -4,6 +4,10 @@ buildscript {
     repositories {
         mavenCentral()
     }
+    configurations {
+        all*.exclude group: 'org.abego.treelayout', module: 'org.abego.treelayout.core'
+        all*.exclude group: 'org.jogamp.jogl'
+    }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.1.0'
     }

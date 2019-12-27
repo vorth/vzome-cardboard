@@ -17,12 +17,12 @@
 apply plugin: 'android'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion '22.0.1'
+    compileSdkVersion 23
+    buildToolsVersion '23.0.1'
 
     defaultConfig {
-        minSdkVersion 18
-        targetSdkVersion 18
+        minSdkVersion 19
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
     }
@@ -30,13 +30,16 @@ android {
         disable 'InvalidPackage'
     }
 }
+configurations {
+    all*.exclude group: 'org.abego.treelayout', module: 'org.abego.treelayout.core'
+    all*.exclude group: 'org.jogamp.jogl'
+}
 
 dependencies {
-    compile files('libs/dropboxchoosersdk.jar')
-    compile files('libs/cardboard.jar')
-    compile 'com.android.support:support-v4:22+'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:support-v4:23.0.1'
 
-    compile ( 'com.vzome.core:vzome-core:0.2' ) {
+    compile ( 'com.vzome.core:vzome-core:0.5' ) {
         exclude group: 'org.python'
         exclude group: 'org.eclipse.jetty'
     }
